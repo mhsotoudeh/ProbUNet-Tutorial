@@ -5,10 +5,10 @@ from torch.nn import MSELoss
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, activation="ReLU", kernel_size=3, dilation=1, padding_mode='circular'):
+    def __init__(self, in_ch, out_ch, activation="ReLU", kernel_size=3, dilation=1, padding_mode='circular', conv_class=nn.Conv2d):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
-        self.conv2 = nn.Conv2d(in_channels=out_ch, out_channels=out_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
+        self.conv1 = conv_class(in_channels=in_ch, out_channels=out_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
+        self.conv2 = conv_class(in_channels=out_ch, out_channels=out_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
 
         if activation.lower() == "relu":
             self.activation = nn.ReLU()
@@ -25,14 +25,14 @@ class ConvBlock(nn.Module):
 
 
 class PreResBlock(nn.Module):
-    def __init__(self, in_ch, out_ch=None, activation="ReLU", kernel_size=3, dilation=1, padding_mode='circular'):
+    def __init__(self, in_ch, out_ch=None, activation="ReLU", kernel_size=3, dilation=1, padding_mode='circular', conv_class=nn.Conv2d):
         super().__init__()
         
         if out_ch is None:
             out_ch = in_ch
             self.skipconv = nn.Identity()
         else:
-            self.skipconv = nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=1)
+            self.skipconv = nn.conv_class(in_channels=in_ch, out_channels=out_ch, kernel_size=1)
 
         if activation.lower() == "relu":
             self.activation = nn.ReLU()
@@ -45,9 +45,9 @@ class PreResBlock(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(num_features=in_ch)
         self.bn2 = nn.BatchNorm2d(num_features=med_ch)
-        self.conv1 = nn.Conv2d(in_channels=in_ch, out_channels=med_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
-        self.conv2 = nn.Conv2d(in_channels=med_ch, out_channels=med_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
-        self.outconv = nn.Conv2d(in_channels=med_ch, out_channels=out_ch, kernel_size=1)
+        self.conv1 = conv_class(in_channels=in_ch, out_channels=med_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
+        self.conv2 = conv_class(in_channels=med_ch, out_channels=med_ch, kernel_size=kernel_size, dilation=dilation, padding='same', padding_mode=padding_mode)
+        self.outconv = conv_class(in_channels=med_ch, out_channels=out_ch, kernel_size=1)
 
     def forward(self, x):
         f = self.conv1(self.activation(self.bn1(x)))
@@ -58,11 +58,11 @@ class PreResBlock(nn.Module):
 
 
 class ScaleBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, activation="ReLU", scale_depth=1, kernel_size=3, dilation=1, padding_mode='circular'):
+    def __init__(self, in_ch, out_ch, activation="ReLU", scale_depth=1, kernel_size=3, dilation=1, padding_mode='circular', conv_class=nn.Conv2d):
         super().__init__()
         
-        self.first_preres_blocks = nn.ModuleList( [ PreResBlock(in_ch, None, activation, kernel_size, dilation, padding_mode=padding_mode) for _ in range(scale_depth-1) ] )
-        self.last_preres_block = PreResBlock(in_ch, out_ch, activation, kernel_size, dilation, padding_mode=padding_mode)
+        self.first_preres_blocks = nn.ModuleList( [ PreResBlock(in_ch, None, activation, kernel_size, dilation, padding_mode=padding_mode, conv_class=conv_class) for _ in range(scale_depth-1) ] )
+        self.last_preres_block = PreResBlock(in_ch, out_ch, activation, kernel_size, dilation, padding_mode=padding_mode, conv_class=conv_class)
 
     def forward(self, x):
         f = x
@@ -74,36 +74,11 @@ class ScaleBlock(nn.Module):
         return f
 
 
-class SimpleEncoder(nn.Module):
-    def __init__(self, hlist, num_latent_channels, s, activation="ReLU"):
-        super().__init__()
-        self.flatten = nn.Flatten()
-        self.unflatten = nn.Unflatten(dim=1, unflattened_size=(2,num_latent_channels,s,s))
-        self.encoder_layers = nn.ModuleList( [ nn.Linear(hlist[i], hlist[i+1]) for i in range(len(hlist)-1) ] )
-        
-        if activation.lower() == "relu":
-            self.activation = nn.ReLU()
-        elif activation.lower() == "elu":
-            self.activation = nn.ELU()
-        elif activation.lower() == "leakyrelu":
-            self.activation = nn.LeakyReLU()
-
-    def forward(self, x):
-        f = self.flatten(x)
-        for layer in self.encoder_layers:
-            f = layer(f)
-            f = self.activation(f)
-        f = self.unflatten(f)
-        
-        mean, logstd = f[:,0,:], f[:,1,:]
-        return mean, logstd
-
-
 class Encoder(nn.Module):
-    def __init__(self, chs, activation="ReLU", scale_depth=1, kernel_size=None, dilation=None, padding_mode='circular'):
+    def __init__(self, chs, activation="ReLU", scale_depth=1, kernel_size=None, dilation=None, padding_mode='circular', conv_class=nn.Conv2d):
         super().__init__()
         self.downsampling = nn.AvgPool2d(kernel_size=2)
-        self.encoder_blocks = nn.ModuleList( [ ScaleBlock(chs[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode) for i in range(len(chs)-1) ] )
+        self.encoder_blocks = nn.ModuleList( [ ScaleBlock(chs[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode, conv_class=conv_class) for i in range(len(chs)-1) ] )
 
     def forward(self, x):
         encoder_feature_maps = [x]
@@ -118,7 +93,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, chs, latent_num=0, activation="ReLU", scale_depth=1, kernel_size=None, dilation=None, padding_mode='circular', latent_channels=None, latent_locks=None):
+    def __init__(self, chs, latent_num=0, activation="ReLU", scale_depth=1, kernel_size=None, dilation=None, padding_mode='circular', latent_channels=None, latent_locks=None, conv_class=nn.Conv2d):
         super().__init__()
         self.depth = len(chs) - 1
         self.latent_num = latent_num
@@ -129,26 +104,26 @@ class Decoder(nn.Module):
 
         # Prior Net
         self.latent_mean_convs = nn.ModuleList(
-            [ nn.Conv2d(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ] 
+            [ conv_class(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ] 
         )
 
         self.latent_std_convs = nn.ModuleList(
-            [ nn.Conv2d(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
+            [ conv_class(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
         )
         self.decoder_blocks = nn.ModuleList(
-            [ ScaleBlock(chs[i] + chs[i+1] + latent_channels[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode) if i < latent_num
-            else ScaleBlock(chs[i] + chs[i+1], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode) for i in range(self.depth) ]
+            [ ScaleBlock(chs[i] + chs[i+1] + latent_channels[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode, conv_class=conv_class) if i < latent_num
+            else ScaleBlock(chs[i] + chs[i+1], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode, conv_class=conv_class) for i in range(self.depth) ]
         )
 
         # Posterior Net
         self.post_latent_mean_convs = nn.ModuleList(
-            [ nn.Conv2d(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
+            [ conv_class(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
         )
         self.post_latent_std_convs = nn.ModuleList(
-            [ nn.Conv2d(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
+            [ conv_class(in_channels=chs[i], out_channels=latent_channels[i], kernel_size=1) for i in range(latent_num) ]
         )
         self.post_decoder_blocks = nn.ModuleList(
-            [ ScaleBlock(chs[i] + chs[i+1] + latent_channels[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode) for i in range(latent_num - 1) ]
+            [ ScaleBlock(chs[i] + chs[i+1] + latent_channels[i], chs[i+1], activation, scale_depth[i+1], kernel_size[i+1], dilation[i+1], padding_mode=padding_mode, conv_class=conv_class) for i in range(latent_num - 1) ]
         )
 
 
@@ -278,7 +253,7 @@ class Decoder(nn.Module):
 
 
 class HPUNet(nn.Module):
-    def __init__(self, in_ch, chs, latent_num=0, out_ch=1, activation="ReLU", scale_depth=None, kernel_size=None, dilation=None, padding_mode='circular', latent_channels=None, latent_locks=None):
+    def __init__(self, in_ch, chs, latent_num=0, out_ch=1, activation="ReLU", scale_depth=None, kernel_size=None, dilation=None, padding_mode='circular', latent_channels=None, latent_locks=None, conv_dim=2):
         super().__init__()
         if latent_locks is None:
             latent_locks = [False for _ in range(latent_num)]
@@ -289,15 +264,18 @@ class HPUNet(nn.Module):
         assert len(scale_depth) == len(chs)
         assert len(kernel_size) == len(chs)
         assert len(dilation) == len(chs)
+
+        self.conv_dim = conv_dim
+        self.conv_class = nn.Conv2d if self.conv_dim == 2 else nn.Conv1d
         decoder_head_in_channels = chs[0] + (0 if latent_num < len(chs) else latent_channels[-1])
 
-        self.encoder_head = ConvBlock(in_ch, chs[0], activation, kernel_size[0], dilation[0], padding_mode='zeros')
-        self.encoder = Encoder(chs, activation, scale_depth, kernel_size, dilation, padding_mode='zeros')
-        self.decoder = Decoder(list(reversed(chs)), latent_num, activation, list(reversed(scale_depth)), list(reversed(kernel_size)), list(reversed(dilation)), padding_mode=padding_mode, latent_channels=latent_channels, latent_locks=latent_locks)
-        self.decoder_head = ScaleBlock(decoder_head_in_channels, out_ch, activation, scale_depth[0], kernel_size[0], dilation[0], padding_mode=padding_mode)
+        self.encoder_head = ConvBlock(in_ch, chs[0], activation, kernel_size[0], dilation[0], padding_mode='zeros', conv_class=self.conv_class)
+        self.encoder = Encoder(chs, activation, scale_depth, kernel_size, dilation, padding_mode='zeros', conv_class=self.conv_class)
+        self.decoder = Decoder(list(reversed(chs)), latent_num, activation, list(reversed(scale_depth)), list(reversed(kernel_size)), list(reversed(dilation)), padding_mode=padding_mode, latent_channels=latent_channels, latent_locks=latent_locks, conv_class=self.conv_class)
+        self.decoder_head = ScaleBlock(decoder_head_in_channels, out_ch, activation, scale_depth[0], kernel_size[0], dilation[0], padding_mode=padding_mode, conv_class=self.conv_class)
 
-        self.posterior_encoder_head = ConvBlock(in_ch+1, chs[0], activation, kernel_size[0], dilation[0], padding_mode='zeros')
-        self.posterior_encoder = Encoder(chs, activation, scale_depth, kernel_size, dilation, padding_mode='zeros')
+        self.posterior_encoder_head = ConvBlock(in_ch+1, chs[0], activation, kernel_size[0], dilation[0], padding_mode='zeros', conv_class=self.conv_class)
+        self.posterior_encoder = Encoder(chs, activation, scale_depth, kernel_size, dilation, padding_mode='zeros', conv_class=self.conv_class)
 
     def forward(self, x, y=None, times=1, first_channel_only=True, insert_from_postnet=False):
         f = self.encoder_head(x)
@@ -475,8 +453,9 @@ class TopkMaskedLoss(nn.Module):
 
 
 class ELBOLoss(nn.Module):
-    def __init__(self, reconstruction_loss, beta=None):
+    def __init__(self, reconstruction_loss, beta=None, conv_dim=2):
         super().__init__()
+        self.conv_dim = conv_dim
         self.reconstruction_loss = reconstruction_loss
         
         if beta is None:
@@ -487,7 +466,7 @@ class ELBOLoss(nn.Module):
 
  
     def forward(self, yhat, y, kls, **kwargs):                
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=(1,2))
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim+1)) )
         rec_term = rec_loss_before_mean.mean()
         kl_term = self.beta_scheduler.beta * torch.sum(kls)
         loss = rec_term + kl_term
@@ -504,8 +483,9 @@ class ELBOLoss(nn.Module):
 
 
 class GECOLoss(nn.Module):
-    def __init__(self, reconstruction_loss, kappa, decay=0.9, update_rate=0.01, device='cpu', log_inv_function='exp'):
+    def __init__(self, reconstruction_loss, kappa, decay=0.9, update_rate=0.01, device='cpu', log_inv_function='exp', conv_dim=2):
         super(GECOLoss, self).__init__()
+        self.conv_dim = conv_dim
         self.reconstruction_loss = reconstruction_loss
         
         self.kappa = kappa
@@ -533,7 +513,7 @@ class GECOLoss(nn.Module):
     
 
     def forward(self, yhat, y, kls, **kwargs):
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=(1,2))
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim+1)) )
         rec_loss = rec_loss_before_mean.mean()
         rec_constraint = rec_loss - self.kappa
 
