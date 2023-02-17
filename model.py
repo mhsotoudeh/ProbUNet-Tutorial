@@ -235,7 +235,8 @@ class Decoder(nn.Module):
                         + (    post_stds[i] ** 2  +  (post_means[i] - prior_means[i]) ** 2)     \
                             / 2 / prior_stds[i] ** 2                                         \
                         - 1 / 2
-                    kls[i] = kl.sum(dim=(1,2,3)).mean()
+                    
+                    kls[i] = kl.reshape(feature_maps[0].shape[0],-1).sum(dim=1).mean()
 
             
             # Items to return as well as the network's output
@@ -278,7 +279,6 @@ class HPUNet(nn.Module):
         self.posterior_encoder = Encoder(chs, activation, scale_depth, kernel_size, dilation, padding_mode='zeros', conv_class=self.conv_class)
 
     def forward(self, x, y=None, times=1, first_channel_only=True, insert_from_postnet=False):
-        print('alive')
         f = self.encoder_head(x)
         f = self.encoder(f)
         
@@ -466,8 +466,8 @@ class ELBOLoss(nn.Module):
         self.last_loss = None
 
  
-    def forward(self, yhat, y, kls, **kwargs):                
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim+1)) )
+    def forward(self, yhat, y, kls, **kwargs):
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim)) )
         rec_term = rec_loss_before_mean.mean()
         kl_term = self.beta_scheduler.beta * torch.sum(kls)
         loss = rec_term + kl_term
@@ -514,7 +514,7 @@ class GECOLoss(nn.Module):
     
 
     def forward(self, yhat, y, kls, **kwargs):
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim+1)) )
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum( dim=tuple(range(1,self.conv_dim)) )
         rec_loss = rec_loss_before_mean.mean()
         rec_constraint = rec_loss - self.kappa
 
