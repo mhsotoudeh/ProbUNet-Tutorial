@@ -1,6 +1,7 @@
 dotmap
 matplotlib
 numpy
+scikit-learn
 scipy
 tensorboard
 tensorflow

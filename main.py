@@ -52,12 +52,7 @@ parser.add_argument("--latent_locks", type=int, nargs='+', help="Whether Latent 
 
 # Loss
 
-parser.add_argument("--rec_type", help="Reconstruction Loss Type (mse / loglikelihood)", required=True)
-parser.add_argument("--ll_std_sample_num", type=int, help="(rec_type: loglikelihood) 0: Directly Predict Standard Devation / 1+: Number of Samples to Estimate Standard Deviation")
-
-parser.add_argument("--k", type=float, help="If Provided, will use top-k Mask for Reconstruction Loss")
-parser.add_argument("--topk_deterministic", action='store_true', help="Calculate top-k Mask Deterministically or Use Gumbell Trick")
-
+parser.add_argument("--rec_type", help="Reconstruction Loss Type", required=True)
 parser.add_argument("--loss_type", default="ELBO", help="Loss Function Type (ELBO/GECO)")
 
 parser.add_argument("--beta", type=float, default=1.0, help="(If Using ELBO Loss) Beta Parameter")
@@ -167,16 +162,13 @@ if val_file is not None:
 
 
 # Initialize Model
-extra_out_ch = 1 if args.rec_type == 'loglikelihood' and args.ll_std_sample_num == 0 else 0
-
-model = HPUNet( in_ch=args.in_ch, out_ch=args.out_ch+extra_out_ch, chs=args.intermediate_ch,
+model = HPUNet( in_ch=args.in_ch, out_ch=args.out_ch, chs=args.intermediate_ch,
                 latent_num=args.latent_num, latent_channels=args.latent_chs, latent_locks=args.latent_locks,
                 scale_depth=args.scale_depth, kernel_size=args.kernel_size, dilation=args.dilation,
                 padding_mode=args.padding_mode ).double()
 
 
 args.trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-
 
 model.to(device)
 
@@ -187,16 +179,9 @@ model.to(device)
 if args.rec_type.lower() == 'mse':
     reconstruction_loss = MSELossWrapper()
 
-elif args.rec_type.lower() == 'loglikelihood':
-    reconstruction_loss = LogLikelihoodLoss()
-
 else:
     print('Invalid reconstruction loss type, exiting...')
     exit()
-
-## Masked Reconstruction
-if args.k is not None:
-    reconstruction_loss = TopkMaskedLoss(loss=reconstruction_loss, k=args.k, deterministic=args.topk_deterministic)
 
 ## Total Loss
 if args.loss_type.lower() == 'elbo':

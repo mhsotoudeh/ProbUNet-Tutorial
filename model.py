@@ -160,13 +160,13 @@ class Decoder(nn.Module):
 
 
             # Items to return as well as the network's output
-            # infodict = {
-            #     'prior_latents': prior_latents,
-            #     'prior_means': prior_means,
-            #     'prior_stds': prior_stds
-            # }
+            infodict = {
+                'prior_latents': prior_latents,
+                'prior_means': prior_means,
+                'prior_stds': prior_stds
+            }
 
-            return f
+            return f, infodict
         
         
         else:  # Using Posterior Net
@@ -286,9 +286,10 @@ class HPUNet(nn.Module):
 
         if y is None:  # Not Using Posterior Net
             for _ in range(times):
-                o = self.decoder(f)
+                o, infodict = self.decoder(f)
                 o = self.decoder_head(o)
                 outs.append(o)
+                infodicts.append(infodict)
 
         else:  # Using Posterior Net
             l = self.posterior_encoder_head(torch.cat([x, y], dim=1))
@@ -369,85 +370,6 @@ class MSELossWrapper(MSELoss):
 
         self.last_loss = {
             'expanded_loss': loss
-        }
-
-        return loss
-
-
-class LogLikelihoodLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.mse = MSELoss(reduction='none')    
-        self.last_loss = None
-
-    def forward(self, yhat, y, **kwargs):
-        mse_term = self.mse(yhat, y) / kwargs['logstd2'].exp()
-        std_term = kwargs['logstd2']
-        loss = mse_term + std_term
-
-        self.last_loss = {
-            'expanded_mse_term': mse_term,
-            'expanded_std_term': std_term,
-            'expanded_loss': loss
-        }
-
-        return loss
-
-
-def sample_gumbel(shape, eps=1e-20, device='cpu'):
-    return - torch.log(
-        - torch.log(
-            torch.rand(shape, device=device) + eps
-        )
-        + eps
-     )
-
-
-def topk_mask(score, k, deterministic=False):
-    with torch.no_grad():
-        score_flat = score.clone().reshape(-1)
-        k_int = int( score_flat.shape[0] * k )
-        assert 1 <= k_int <= score_flat.shape[0]
-
-        # Normalize score and Add Gumbel noise (if not deterministic)
-        score_flat /= score_flat.sum()
-        log_score_flat = torch.log(score_flat)
-        if not deterministic:  # Gumbel trick
-            log_score_flat += sample_gumbel(log_score_flat.shape, device=score.device)
-        
-        # Sample indices of top k elements
-        _, indices = torch.topk(log_score_flat, k_int)
-
-        # Create top k mask
-        topk_mask = torch.zeros_like(score_flat, dtype=score.dtype, device=score.device)        
-        topk_mask.scatter_add_(dim=0, index=indices, src=torch.ones(k_int, dtype=score.dtype, device=score.device))
-        topk_mask = topk_mask.to(int)
-
-        return topk_mask.reshape_as(score)
-
-
-class TopkMaskedLoss(nn.Module):
-    def __init__(self, loss, k, deterministic):
-        assert 0.0 < k <= 1.0
-
-        super().__init__()
-        self.loss = loss
-        self.k = k
-        self.deterministic = deterministic
-        
-        self.last_loss = None
-
- 
-    def forward(self, yhat, y, **kwargs):        
-        unmasked_loss = self.loss(yhat, y, **kwargs)
-        mask = topk_mask(unmasked_loss, self.k, self.deterministic)
-        loss = mask * unmasked_loss / self.k
-
-        self.last_loss = {
-            'expanded_unmasked_loss': unmasked_loss,
-            'mask': mask,
-            'expanded_loss': loss,
-            'internal': self.loss.last_loss
         }
 
         return loss
