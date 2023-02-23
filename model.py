@@ -139,11 +139,17 @@ class Decoder(nn.Module):
 
     def forward(self, feature_maps, post_feature_maps=None, insert_from_postnet=False):
         if post_feature_maps is None:  # Not Using Posterior Net
+            prior_means, prior_stds = [], []
+            prior_latents = []
             f = feature_maps[0]
             for i in range(self.depth):
                 if i < self.latent_num:
                     means, log_stds = self.latent_mean_convs[i](f), self.latent_std_convs[i](f)
+                    prior_means.append(means)
+                    prior_stds.append(torch.exp(log_stds))
+
                     latent = self.sample_latent(means, log_stds, self.latent_locks[i])
+                    prior_latents.append(latent)
 
                     f = torch.cat([f, latent], dim=1)
 
@@ -177,6 +183,7 @@ class Decoder(nn.Module):
                 means, log_stds = self.post_latent_mean_convs[i](l), self.post_latent_std_convs[i](l)
                 post_means.append(means)
                 post_stds.append(torch.exp(log_stds))
+                
                 post_latent = self.sample_latent(means, log_stds, self.latent_locks[i])
 
                 post_latents.append(post_latent)
