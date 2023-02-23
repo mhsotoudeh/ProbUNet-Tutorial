@@ -160,7 +160,7 @@ def train_model(args, model, dataloader, criterion, optimizer, lr_scheduler, wri
         time_checkpoint = time.time()
         epoch_time = (time_checkpoint - last_time_checkpoint) / 60
         total_time = (time_checkpoint - start_time) / 60
-        print('Epoch {}/{} done in {:.1f} minutes. \t\t\t\t Total time: {:.1f} minutes'.format(e+1, args.epochs, epoch_time, total_time))
+        # print('Epoch {}/{} done in {:.1f} minutes. \t\t\t\t Total time: {:.1f} minutes'.format(e+1, args.epochs, epoch_time, total_time))
         last_time_checkpoint = time_checkpoint
         
         # Save Model and Loss
