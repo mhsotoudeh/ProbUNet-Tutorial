@@ -100,7 +100,7 @@ class Decoder(nn.Module):
         self.latent_channels = latent_channels
         self.latent_locks = latent_locks
 
-        self.upsampling = nn.UpsamplingNearest2d(scale_factor=2) if conv_class == nn.Conv2d else nn.Upsample(scale_factor=2, mode='nearest')
+        self.upsampling = nn.Upsample(scale_factor=2, mode='nearest')
 
         # Prior Net
         self.latent_mean_convs = nn.ModuleList(
