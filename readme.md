@@ -1,6 +1,8 @@
 # ProbUNet-Tutorial
 Tutorial on Probabilistic U-Nets, Including a Minimal PyTorch Implementation of the Hierarchical Probabilistic U-Net.
 
+Access Slides & Recording of the Talk Presented at the [KITP Program on Building a Physical Understanding of Galaxy Evolution with Data-driven Astronomy](https://datadrivengalaxyevolution.github.io/)
+
 ### Complementary Resources
 
 1. [1806.05034](https://arxiv.org/abs/1806.05034) **Original Probabilistic U-Net Paper** (Kohl et al.) + [GitHub Repo](https://github.com/SimonKohl/probabilistic_unet)
