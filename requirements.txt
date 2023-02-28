@@ -1,4 +1,5 @@
 dotmap
+gdown
 matplotlib
 numpy
 scikit-learn
