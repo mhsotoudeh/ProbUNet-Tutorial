@@ -1,8 +1,8 @@
 # ProbUNet-Tutorial
 
-![Tutorial on Probabilistic U-Nets](media/title.gif)
-
 Tutorial on Probabilistic U-Nets, Including a Minimal PyTorch Implementation of the Hierarchical Probabilistic U-Net.
+
+![Tutorial on Probabilistic U-Nets](media/title.gif)
 
 | ![Part 1: Source Reconstruction](media/01-source_reconstruction.png)                                                                                                                                                                                         | ![Part 2: Rescue the Randomness](media/01-source_reconstruction.png)                                                                                                                                                                                           |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
