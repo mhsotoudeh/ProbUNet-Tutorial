@@ -17,5 +17,5 @@ Access Slides & Recording of the Talk Presented at the [KITP Program on Building
 3. [1903.10145](https://arxiv.org/abs/1903.10145) **Paper on KL Vanishing and Cyclical Beta Schedule** (Fu, Li, et al. 2019)
 4. [1810.00597](https://arxiv.org/abs/1810.00597) **Paper on GECO Loss** (Rezende and Viola 2018)
 5. [2302.03026](https://arxiv.org/abs/2302.03026) **Novel Method for Coverage Probability Test** (Lemos et al. 2023)
-6. Blog Post on [Understanding Variational Autoencoders (VAEs)](https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73)
-7. Blog Post on [Conditional Variational Autoencoders](https://ijdykeman.github.io/ml/2016/12/21/cvae.html)
+6. [Joseph Rocca's Blog Post on](https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73) **Understanding Variational Autoencoders (VAEs)**
+7. [Isaac Dykeman's Blog Post on](https://ijdykeman.github.io/ml/2016/12/21/cvae.html) **Conditional Variational Autoencoders**
