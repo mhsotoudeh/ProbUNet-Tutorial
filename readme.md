@@ -7,11 +7,11 @@ Tutorial on Probabilistic U-Nets, Including a Minimal PyTorch Implementation of 
 | ![Part 1: Source Reconstruction](media/01-source_reconstruction.png)      |     ![Part 2: Rescue the Randomness](media/02-rescue_the_randomness.png)  |
 |                                :----:                                     |                                :----:                                     |
 |                      **Part 1:** Source Reconstruction                    |                      **Part 2:** Rescue the Randomness                    |
-| <a target="_blank" href="https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/01%20Source%20Reconstruction.ipynb">
+| <h3> <a target="_blank" href="https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/01%20Source%20Reconstruction.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a> | <a target="_blank" href="https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/02%20Rescue%20The%20Randomness.ipynb">
+</a> </h3> | <h3> <a target="_blank" href="https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/02%20Rescue%20The%20Randomness.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a> |
+</a> </h3> |
 
 
 Access Slides & Recording of the Talk Presented at the [KITP Program on Building a Physical Understanding of Galaxy Evolution with Data-driven Astronomy](https://datadrivengalaxyevolution.github.io/)
