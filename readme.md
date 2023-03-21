@@ -8,7 +8,8 @@ Using a Minimal PyTorch Implementation of the [Hierarchical Probabilistic U-Net]
 |                                :----:                                     |                                :----:                                     |
 |                      **Part 1:** Source Reconstruction <br/><br/> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/01%20Source%20Reconstruction.ipynb)                   |                      **Part 2:** Rescue the Randomness <br/><br/> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mhsotoudeh/ProbUNet-Tutorial/blob/main/02%20Rescue%20The%20Randomness.ipynb)                  |
 
-Access Slides & Recording of the Talk Presented at the [KITP Program on Building a Physical Understanding of Galaxy Evolution with Data-driven Astronomy](https://datadrivengalaxyevolution.github.io/) **(Coming Soon!)**
+🔗 [Download Slides](Slides.pdf)
+📽️ [Access Recording](https://online.kitp.ucsb.edu/online/galevo23/sotoudeh/) of the Talk Presented at the [KITP Program on Building a Physical Understanding of Galaxy Evolution with Data-driven Astronomy](https://datadrivengalaxyevolution.github.io/)
 
 ### Complementary Resources
 
